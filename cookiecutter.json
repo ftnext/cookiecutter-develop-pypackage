@@ -1,0 +1,4 @@
+{
+    "project_dir_name": "awesome-project",
+    "package_name": "{{ cookiecutter.project_dir_name|lower|replace('-', '_') }}"
+}
