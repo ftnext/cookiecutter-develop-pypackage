@@ -23,8 +23,38 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-randomly",
+{%- if cookiecutter.use_taskipy == "yes" %}
+    "taskipy",
+    "autoflake",
+    "pyupgrade",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+{%- endif %}
+]
+
 [project.urls]
 Repository = "TODO write repository URL"
 
 [tool.setuptools.dynamic]
 version = { attr = "{{ cookiecutter.package_name }}.__version__" }
+
+{%- if cookiecutter.use_taskipy == "yes" %}
+[tool.taskipy.tasks]
+pre_test = "task format"
+test = "pytest -v"
+post_test = "task check"
+format = "task format_autoflake && task format_pyupgrade && task format_black && task format_isort"
+format_autoflake = "autoflake --in-place --remove-all-unused-imports $(find src tests -name '*.py') setup.py"
+format_pyupgrade = "pyupgrade $(find src tests -name '*.py') setup.py"
+format_black = "black -l 79 src tests setup.py"
+format_isort = "isort --profile black -l 79 src tests setup.py"
+check = "task check_flake8 && task check_mypy"
+check_flake8 = "flake8 src tests"
+check_mypy = "mypy src tests"
+{%- endif %}

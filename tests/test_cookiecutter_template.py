@@ -5,14 +5,53 @@ from cookiecutter.main import cookiecutter
 TEMPLATE_DIRECTORY = str(pathlib.Path(__file__).parent.parent)
 
 
-def test_generated_files(tmpdir):
+def test_generated_files_without_taskipy(tmpdir):
     generate(
         tmpdir,
         {
             "project_dir_name": "awesome-project",
+            "use_taskipy": "no",
         },
     )
-    assert paths(tmpdir) == {
+    assert paths(tmpdir) == expected_paths()
+
+    project_root = pathlib.Path(str(tmpdir)) / "awesome-project"
+    pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
+    workflow = (
+        project_root / ".github" / "workflows" / "testing.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "[tool.taskipy.tasks]" not in pyproject
+    assert '"taskipy"' not in pyproject
+    assert "pytest -v" in workflow
+    assert "task test" not in workflow
+
+
+def test_generated_files_with_taskipy(tmpdir):
+    generate(
+        tmpdir,
+        {
+            "project_dir_name": "awesome-project",
+            "use_taskipy": "yes",
+        },
+    )
+    assert paths(tmpdir) == expected_paths()
+
+    project_root = pathlib.Path(str(tmpdir)) / "awesome-project"
+    pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
+    workflow = (
+        project_root / ".github" / "workflows" / "testing.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "[tool.taskipy.tasks]" in pyproject
+    assert '"taskipy"' in pyproject
+    assert 'format_black = "black -l 79 src tests setup.py"' in pyproject
+    assert "task test" in workflow
+    assert "pytest -v" not in workflow
+
+
+def expected_paths():
+    return {
         "awesome-project",
         "awesome-project/.github",
         "awesome-project/.github/workflows",
